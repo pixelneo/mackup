@@ -55,22 +55,20 @@ class ApplicationProfile(object):
                 if exists mackup/file
                   are you sure ?
                   if sure
-                    rm mackup/file
-                    mv home/file mackup/file
-                    link mackup/file home/file
+                    NO (rm mackup/file)
+                    cp home/file mackup/file mv home/file mackup/file
+                    NO link
                 else
-                  mv home/file mackup/file
-                  link mackup/file home/file
+                  cp home/file mackup/file (NOT: mv home/file mackup/file)
+                  NO link
         """
         # For each file used by the application
         for filename in self.files:
             (home_filepath, mackup_filepath) = self.getFilepaths(filename)
 
-            # If the file exists and is not already a link pointing to Mackup
+            # If the file exists 
             if (os.path.isfile(home_filepath) or os.path.isdir(home_filepath)) and not (
-                os.path.islink(home_filepath)
-                and (os.path.isfile(mackup_filepath) or os.path.isdir(mackup_filepath))
-                and os.path.samefile(home_filepath, mackup_filepath)
+                (os.path.isfile(mackup_filepath) or os.path.isdir(mackup_filepath))
             ):
 
                 if self.verbose:
@@ -108,17 +106,9 @@ class ApplicationProfile(object):
                         utils.delete(mackup_filepath)
                         # Copy the file
                         utils.copy(home_filepath, mackup_filepath)
-                        # Delete the file in the home
-                        utils.delete(home_filepath)
-                        # Link the backuped file to its original place
-                        utils.link(mackup_filepath, home_filepath)
                 else:
                     # Copy the file
                     utils.copy(home_filepath, mackup_filepath)
-                    # Delete the file in the home
-                    utils.delete(home_filepath)
-                    # Link the backuped file to its original place
-                    utils.link(mackup_filepath, home_filepath)
             elif self.verbose:
                 if os.path.exists(home_filepath):
                     print(
@@ -146,10 +136,9 @@ class ApplicationProfile(object):
               if exists home/file
                 are you sure ?
                 if sure
-                  rm home/file
-                  link mackup/file home/file
+                  cp mackup/file home/file
               else
-                link mackup/file home/file
+                cp mackup/file home/file
         """
         # For each file used by the application
         for filename in self.files:
@@ -161,14 +150,9 @@ class ApplicationProfile(object):
             file_or_dir_exists = os.path.isfile(mackup_filepath) or os.path.isdir(
                 mackup_filepath
             )
-            pointing_to_mackup = (
-                os.path.islink(home_filepath)
-                and os.path.exists(mackup_filepath)
-                and os.path.samefile(mackup_filepath, home_filepath)
-            )
             supported = utils.can_file_be_synced_on_current_platform(filename)
 
-            if file_or_dir_exists and not pointing_to_mackup and supported:
+            if file_or_dir_exists and supported:
                 if self.verbose:
                     print(
                         "Restoring\n  linking {}\n  to      {} ...".format(
@@ -198,10 +182,9 @@ class ApplicationProfile(object):
                         " home.\nDo you want to replace it with"
                         " your backup ?".format(file_type, filename)
                     ):
-                        utils.delete(home_filepath)
-                        utils.link(mackup_filepath, home_filepath)
+                        utils.copy(mackup_filepath, home_filepath)
                 else:
-                    utils.link(mackup_filepath, home_filepath)
+                    utils.copy(mackup_filepath, home_filepath)
             elif self.verbose:
                 if os.path.exists(home_filepath):
                     print(
@@ -222,45 +205,4 @@ class ApplicationProfile(object):
                     )
 
     def uninstall(self):
-        """
-        Uninstall Mackup.
-
-        Restore any file where it was before the 1st Mackup backup.
-
-        Algorithm:
-            for each file in config
-                if mackup/file exists
-                    if home/file exists
-                        delete home/file
-                    copy mackup/file home/file
-            delete the mackup folder
-            print how to delete mackup
-        """
-        # For each file used by the application
-        for filename in self.files:
-            (home_filepath, mackup_filepath) = self.getFilepaths(filename)
-
-            # If the mackup file exists
-            if os.path.isfile(mackup_filepath) or os.path.isdir(mackup_filepath):
-                # Check if there is a corresponding file in the home folder
-                if os.path.exists(home_filepath):
-                    if self.verbose:
-                        print(
-                            "Reverting {}\n  at {} ...".format(
-                                mackup_filepath, home_filepath
-                            )
-                        )
-                    else:
-                        print("Reverting {} ...".format(filename))
-
-                    if self.dry_run:
-                        continue
-
-                    # If there is, delete it as we are gonna copy the Dropbox
-                    # one there
-                    utils.delete(home_filepath)
-
-                    # Copy the Dropbox file to the home folder
-                    utils.copy(mackup_filepath, home_filepath)
-            elif self.verbose:
-                print("Doing nothing, {} does not exist".format(mackup_filepath))
+        raise NotImplementedError('Uninstall is not implemented')
