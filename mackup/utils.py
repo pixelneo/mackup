@@ -1,5 +1,6 @@
 """System static utilities being used by the modules."""
 import base64
+import hashlib
 import os
 import platform
 import shutil
@@ -19,6 +20,17 @@ FORCE_YES = False
 # Flag that control if mackup can be run as root
 CAN_RUN_AS_ROOT = False
 
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            hash_md5.update(chunk)
+
+    return hash_md5.hexdigest()[:64]
+
+def are_these_identical(fname1, fname2):
+    """ Compares two files using md5 """
+    return md5(fname1) == md5(fname2)
 
 def confirm(question):
     """
